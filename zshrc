@@ -47,7 +47,7 @@ export EDITOR="vim"
 bindkey -v
 
 # paths
-export PATH="~/scripts:$PATH"
+export PATH="~/scripts:~/.arcanist/arcanist/bin:$PATH"
 export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 #}}}
 
@@ -66,12 +66,34 @@ alias la='ls -a'
 alias lla='ls -la'
 alias lt='ls -ltr'
 
-alias eclipse='~/scripts/run_eclipse.sh &'
+alias eclipse-cpp='~/scripts/run_eclipse-cpp.sh &'
+alias eclipse-java='~/scripts/run_eclipse-java.sh &'
 alias eclim='~/scripts/run_eclimd.sh &'
 alias ssh='ssh -o ServerAliveInterval=300'
 alias vim='/usr/local/bin/vim --servername server'
 alias ack='~/scripts/ack'
+alias lua='~/bin/lua/lua-5.2.1/install/bin/lua'
+alias clang++='~/bin/llvm/build/bin/clang++'
+alias tig='/usr/local/bin/tig'
 # }}}
+
+# {{{1 Locale
+export LANG=en_GB.UTF-8
+export LC_CTYPE=en_GB.UTF-8
+export LC_COLLATE=en_GB.UTF-8
+export LC_TIME=en_GB.UTF-8
+export LC_NUMERIC=en_GB.UTF-8
+export LC_MONETARY=en_GB.UTF-8
+export LC_MESSAGES=en_GB.UTF-8
+export MM_CHARSET=en_GB.UTF-8
+# }}}
+
+#{{{1 Environment variables
+export BUILD_VM="10.2.67.30"
+export RUN_VM="10.2.67.27"
+export CVSROOT=":pserver:jharvey@mack:/cvsroot/1.0"
+export PROJECTS="/mnt/projects"
+#}}}
 
 #{{{1 Key bindings
 bindkey '\e[1~' beginning-of-line
@@ -87,7 +109,7 @@ bindkey '\eOD' backward-char
 bindkey '\e[2~' overwrite-mode
 bindkey '\e[3~' delete-char
 
-bindkey -M viins 'jj' vi-cmd-mode
+#bindkey -M viins 'jj' vi-cmd-mode
 bindkey -M vicmd 'u' undo
 #}}}
 
@@ -138,21 +160,46 @@ setopt HIST_EXPIRE_DUPS_FIRST
 setopt HIST_FIND_NO_DUPS
 #}}}
 
+
 # {{{1 Prompt
+# {{{ tmux titles
+tmux_preexec() {
+    if [ "$TMUX" != "" ]; then
+        # set tmux-title to running program
+        if [ "$TERM" = "screen-256color" ]; then
+            printf "\033]2;$(echo "$1" | cut -d" " -f1)\033\\"
+            printf "\033k$PWD\033\\"
+        fi
+        tmux setenv TMUXPWD_$(tmux display -p "#I") $PWD
+    fi
+}
+
+tmux_precmd() {
+    if [ "$TMUX" != "" ]; then
+        if [ "$TERM" = "screen-256color" ]; then
+            printf "\033]2;zsh\033\\"
+            printf "\033k$PWD\033\\"
+        fi
+        tmux setenv TMUXPWD_$(tmux display -p "#I") $PWD
+    fi
+}
+# }}}
 # {{{ vi mode for prompt and cursor
 setopt prompt_subst
 CMD_MODE=$'%{\e[01;38;05;22m%}%{\e[01;48;05;148m%} CMD %{\e[0m%}'
 INS_MODE=$'%{\e[01;38;05;24m%}%{\e[01;48;05;253m%} INS %{\e[0m%}'
 
 zle-keymap-select () {
-  if [ $TERM = "screen" ]; then
-    if [ $KEYMAP = vicmd ]; then
-      echo -ne '\033P\033]12;red\007\033\\'
+  if [ "$TERM" = "screen-256color" ]; then
+    if [ "$KEYMAP" = vicmd ]; then
+      printf '\033Ptmux;\033\033]12;red\007\033\\'
+      VIMODE=$CMD_MODE
     else
-      echo -ne '\033P\033]12;orange\007\033\\'
+      printf '\033Ptmux;\033\033]12;orange\007\033\\'
+      VIMODE=$INS_MODE
     fi
-  elif [ $TERM != "linux" ]; then
-    if [ $KEYMAP = vicmd ]; then
+  elif [ "$TERM" != "linux" ]; then
+    if [ "$KEYMAP" = vicmd ]; then
       echo -ne "\033]12;red\007"
       VIMODE=$CMD_MODE
     else
@@ -168,9 +215,9 @@ zle-line-init () {
   zle -K vicmd
   zle reset-prompt
 
-  if [ $TERM = "screen" ]; then
-    echo -ne '\033P\033]12;red\007\033\\'
-  elif [ $TERM != "linux" ]; then
+  if [ "$TERM" = "screen" ]; then
+    printf '\033Ptmux;\033]12;red\007\033\\'
+  elif [ "$TERM" != "linux" ]; then
     echo -ne "\033]12;red\007"
   fi
 };
@@ -190,7 +237,7 @@ zstyle ':vcs_info:*' stagedstr $'%{\e[01;38;05;240m%}%{\e[01;48;05;250m%} STAGED
 zstyle ':vcs_info:*' unstagedstr $'%{\e[01;38;05;24m%}%{\e[01;48;05;253m%} UNSTAGED %{\e[0m%}'
 zstyle ':vcs_info:*' check-for-changes true
 zstyle ':vcs_info:(sv[nk]|bzr):*' branchformat '%b%F{1}:%F{11}%r'
-zstyle ':vcs_info:*' enable git svn
+zstyle ':vcs_info:*' enable git svn cvs
 vcs_prompt_precmd() {
     if [[ -z $(git ls-files --other --exclude-standard 2> /dev/null) ]] {
         zstyle ':vcs_info:*' formats $'%u%c%{\e[01;38;05;88m%}%{\e[01;48;05;208m%} %b %{\e[0m%}'
@@ -213,11 +260,13 @@ LOCATION=$'%{\e[01;38;05;255m%}%{\e[01;48;05;240m%} %~ %{\e[0m%}'
 
 # {{{ the prompt
 precmd() {
+    tmux_precmd
     vcs_prompt_precmd
     vi_prompt_precmd
 }
 
 preexec() {
+    tmux_preexec $1
     echo -ne "\e[0m"
 }
 
