@@ -1,3 +1,7 @@
+# .ZSHRC
+# ~~~~~~~
+# vim: foldmethod=marker
+
 # {{{1 ZSH Modules
 
 autoload -U compinit promptinit zcalc zsh-mime-setup
@@ -10,11 +14,15 @@ zsh-mime-setup
 # {{{1 Custom functions
 # Customize to your needs...
 setenv() { export $1=$2 } # csh compatibility
-build() { ~/scripts/build.sh $@ } # make etc
+buildvm() { ~/scripts/buildvm.sh $@ } # make etc
 run() { ~/scripts/run.sh $@ } # tests etc
 _force_rehash() {
   (( CURRENT == 1 )) && rehash
   return 1  # Because we didn't really complete anything
+}
+build() {
+    command="TERM=screen schroot -c jharvey-build -- /usr/local/bin/zsh -c \"cd ${PWD}; export TERM=screen; $@;\""
+    eval $command
 }
 # }}}
 
@@ -29,7 +37,7 @@ setopt PUSHD_MINUS
 setopt PUSHD_SILENT
 setopt PUSHD_TO_HOME
 setopt PUSHD_IGNORE_DUPS
-setopt RM_STAR_WAIT
+#setopt RM_STAR_WAIT
 setopt ZLE
 setopt NO_HUP
 setopt VI
@@ -48,7 +56,8 @@ bindkey -v
 
 # paths
 export PATH="~/scripts:~/.arcanist/arcanist/bin:$PATH"
-export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64:$LD_LIBRARY_PATH"
+export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/local/share/pkgconfig:/usr/share/pkgconfig:$PKG_CONFIG_PATH"
 #}}}
 
 #{{{1 Aliases
@@ -69,12 +78,13 @@ alias lt='ls -ltr'
 alias eclipse-cpp='~/scripts/run_eclipse-cpp.sh &'
 alias eclipse-java='~/scripts/run_eclipse-java.sh &'
 alias eclim='~/scripts/run_eclimd.sh &'
-alias ssh='ssh -o ServerAliveInterval=300'
+alias ssh='TERM=screen ssh -o ServerAliveInterval=300'
 alias vim='/usr/local/bin/vim --servername server'
 alias ack='~/scripts/ack'
 alias lua='~/bin/lua/lua-5.2.1/install/bin/lua'
 alias clang++='~/bin/llvm/build/bin/clang++'
 alias tig='/usr/local/bin/tig'
+alias arc='~/.arcanist/arcanist/bin/arc'
 # }}}
 
 # {{{1 Locale
@@ -90,7 +100,7 @@ export MM_CHARSET=en_GB.UTF-8
 
 #{{{1 Environment variables
 export BUILD_VM="10.2.67.30"
-export RUN_VM="10.2.67.27"
+export RUN_VM="10.2.67.113"
 export CVSROOT=":pserver:jharvey@mack:/cvsroot/1.0"
 export PROJECTS="/mnt/projects"
 #}}}
@@ -159,7 +169,6 @@ setopt HIST_SAVE_NO_DUPS
 setopt HIST_EXPIRE_DUPS_FIRST
 setopt HIST_FIND_NO_DUPS
 #}}}
-
 
 # {{{1 Prompt
 # {{{ tmux titles
@@ -282,3 +291,9 @@ ${MACHINE}'
 # }}}
 # }}}
 
+
+export PERL_LOCAL_LIB_ROOT="$PERL_LOCAL_LIB_ROOT:/home/jharvey/perl5";
+export PERL_MB_OPT="--install_base /home/jharvey/perl5";
+export PERL_MM_OPT="INSTALL_BASE=/home/jharvey/perl5";
+export PERL5LIB="/home/jharvey/perl5/lib/perl5:$PERL5LIB";
+export PATH="/home/jharvey/perl5/bin:$PATH";
