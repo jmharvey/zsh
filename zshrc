@@ -20,10 +20,7 @@ _force_rehash() {
   (( CURRENT == 1 )) && rehash
   return 1  # Because we didn't really complete anything
 }
-build() {
-    command="TERM=screen schroot -c jharvey-build -- /usr/local/bin/zsh -c \"cd ${PWD}; export TERM=screen; $@;\""
-    eval $command
-}
+build() { ~/scripts/build.sh $@ }
 # }}}
 
 # {{{1 Settings
@@ -55,9 +52,11 @@ export EDITOR="vim"
 bindkey -v
 
 # paths
-export PATH="~/scripts:~/.arcanist/arcanist/bin:$PATH"
+export PATH="~/scripts:~/.arcanist/arcanist/bin:/home/jharvey/bin/apache-maven-3.1.1/bin:$PATH"
+export PYTHONPATH="~/lib/python":$PYTHONPATH"
 export LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64:$LD_LIBRARY_PATH"
 export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/local/share/pkgconfig:/usr/share/pkgconfig:$PKG_CONFIG_PATH"
+export JAVA_HOME="/usr/lib/jvm/java-1.7.0-openjdk.x86_64"
 #}}}
 
 #{{{1 Aliases
@@ -103,6 +102,7 @@ export BUILD_VM="10.2.67.30"
 export RUN_VM="10.2.67.113"
 export CVSROOT=":pserver:jharvey@mack:/cvsroot/1.0"
 export PROJECTS="/mnt/projects"
+export BUILD_PREFIX="/home/jharvey/scripts/build.sh"
 #}}}
 
 #{{{1 Key bindings
