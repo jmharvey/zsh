@@ -50,6 +50,8 @@ setopt RC_EXPAND_PARAM
 # use vi mode
 export EDITOR="vim"
 bindkey -v
+# 10ms for key sequences
+KEYTIMEOUT=1
 
 # paths
 export PATH="~/scripts:~/.arcanist/arcanist/bin:/home/jharvey/bin/apache-maven-3.1.1/bin:$PATH"
@@ -60,6 +62,7 @@ export JAVA_HOME="/usr/lib/jvm/java-1.7.0-openjdk.x86_64"
 
 #{{{1 Aliases
 alias grep='grep --color=auto'
+alias ag='ag --color-line-number "1;35" --color-path "0;32" --color-match "30;47"'
 alias h='history'
 alias rm='rm -i'
 alias cp='cp -i'
@@ -76,7 +79,7 @@ alias lt='ls -ltr'
 alias eclipse-cpp='~/scripts/run_eclipse-cpp.sh &'
 alias eclipse-java='~/scripts/run_eclipse-java.sh &'
 alias eclim='~/scripts/run_eclimd.sh &'
-alias ssh='TERM=screen ssh -o ServerAliveInterval=300'
+alias ssh='TERM=screen ssh -o ServerAliveInterval=300 -X'
 alias vim='/usr/local/bin/vim --servername server'
 alias ack='~/scripts/ack'
 alias lua='~/bin/lua/lua-5.2.1/install/bin/lua'
@@ -170,6 +173,7 @@ setopt HIST_FIND_NO_DUPS
 #}}}
 
 # {{{1 Prompt
+ZLE_RPROMPT_INDENT=0
 # {{{ tmux titles
 tmux_preexec() {
     if [ "$TMUX" != "" ]; then
@@ -192,101 +196,35 @@ tmux_precmd() {
     fi
 }
 # }}}
-# {{{ vi mode for prompt and cursor
+# {{{ vi mode for prompt
 setopt prompt_subst
-CMD_MODE=$'%{\e[01;38;05;22m%}%{\e[01;48;05;148m%} CMD %{\e[0m%}'
-INS_MODE=$'%{\e[01;38;05;24m%}%{\e[01;48;05;253m%} INS %{\e[0m%}'
+CMD_MODE="NORMAL"
+INS_MODE="INSERT"
+VIMODE=$INS_MODE
 
 zle-keymap-select () {
-  if [ "$TERM" = "screen-256color" ]; then
-    if [ "$KEYMAP" = vicmd ]; then
-      printf '\033Ptmux;\033\033]12;red\007\033\\'
-      VIMODE=$CMD_MODE
-    else
-      printf '\033Ptmux;\033\033]12;orange\007\033\\'
-      VIMODE=$INS_MODE
-    fi
-  elif [ "$TERM" != "linux" ]; then
-    if [ "$KEYMAP" = vicmd ]; then
-      echo -ne "\033]12;red\007"
-      VIMODE=$CMD_MODE
-    else
-      echo -ne "\033]12;orange\007"
-      VIMODE=$INS_MODE
-    fi
-  fi
-
-  zle reset-prompt
+    VIMODE="${${KEYMAP/vicmd/${CMD_MODE}}/(main|viins)/${INS_MODE}}"
+    __promptline
+    zle reset-prompt
 };
-
-zle-line-init () {
-  zle -K vicmd
-  zle reset-prompt
-
-  if [ "$TERM" = "screen" ]; then
-    printf '\033Ptmux;\033]12;red\007\033\\'
-  elif [ "$TERM" != "linux" ]; then
-    echo -ne "\033]12;red\007"
-  fi
-};
-
-zle -N zle-line-init
 zle -N zle-keymap-select
 
-vi_prompt_precmd() {
-    VIMODE=$CMD_MODE
-}
+zle-line-finish () {
+    VIMODE=$INS_MODE
+};
+zle -N zle-line-finish
 # }}}
-
-# {{{ vcs_info for prompt
-autoload -Uz vcs_info
-
-zstyle ':vcs_info:*' stagedstr $'%{\e[01;38;05;240m%}%{\e[01;48;05;250m%} STAGED %{\e[0m%}'
-zstyle ':vcs_info:*' unstagedstr $'%{\e[01;38;05;24m%}%{\e[01;48;05;253m%} UNSTAGED %{\e[0m%}'
-zstyle ':vcs_info:*' check-for-changes true
-zstyle ':vcs_info:(sv[nk]|bzr):*' branchformat '%b%F{1}:%F{11}%r'
-zstyle ':vcs_info:*' enable git svn cvs
-vcs_prompt_precmd() {
-    if [[ -z $(git ls-files --other --exclude-standard 2> /dev/null) ]] {
-        zstyle ':vcs_info:*' formats $'%u%c%{\e[01;38;05;88m%}%{\e[01;48;05;208m%} %b %{\e[0m%}'
-    } else {
-        zstyle ':vcs_info:*' formats $' %{\e[01;38;05;196m%}%{\e[01;48;05;255m%} UNTRACKED %u%c%{\e[01;38;05;88m%}%{\e[01;48;05;208m%} %b %{\e[0m%}'
-    }
-
-    vcs_info
-}
-# }}}
-
-# {{{ other variables for prompt
-ROOT=$'%{\e[01;38;05;255m%}%{\e[01;48;05;196m%} ROOT %{\e[0m%}'
-FAILED=$'%{\e[01;38;05;196m%}%{\e[01;48;05;255m%} FAILED %{\e[0m%}'
-MACHINE=$'%{\e[01;38;05;246m%}%{\e[01;48;05;252m%} %m %{\e[0m%}'
-USER=$'%{\e[01;38;05;240m%}%{\e[01;48;05;246m%} %n %{\e[0m%}'
-LOCATION=$'%{\e[01;38;05;255m%}%{\e[01;48;05;240m%} %~ %{\e[0m%}'
-#PATH=$'%{\e[01;48;05;240m%}%B%F{white} ${${(%):-%~}//\//%B%F{red}/%B%F{white}} %{\e[0m%}'
-# }}}
-
 # {{{ the prompt
 precmd() {
     tmux_precmd
-    vcs_prompt_precmd
-    vi_prompt_precmd
 }
 
 preexec() {
     tmux_preexec $1
-    echo -ne "\e[0m"
 }
 
-PROMPT='%(!/${ROOT}/)%(?//${FAILED})${VIMODE} %B'
+source ~/.shell_prompt.sh
 
-RPROMPT='%
-${vcs_info_msg_0_}%
-${LOCATION}%
-%(!/${ROOT}/${USER})%
-${MACHINE}'
-
-#%{%B%F{red}%K{blue}%} ${${(%):-%~}//\//%B%F{red\}/%B%F{white\}} %
 # }}}
 # }}}
 
