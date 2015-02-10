@@ -1,0 +1,17 @@
+export LIBRARY_PATH="/usr/local/lib:/mnt/sherman/home/thirdparty/g++/4.8.2/AS5_64_DEC/lib:/mnt/sherman/home/thirdparty/g++/4.8.2/AS5_64_DEC/lib64:$LIBRARY_PATH"
+export LD_LIBRARY_PATH="/usr/local/lib:/mnt/sherman/home/thirdparty/g++/4.8.2/AS5_64_DEC/lib:/mnt/sherman/home/thirdparty/g++/4.8.2/AS5_64_DEC/lib64:$LD_LIBRARY_PATH"
+export PLATFORM=AS5_64
+#export PLATFORM=AS5_64_DEC
+export CLASSIFIER=AS5_64-debug
+#export PROJECTS_HOME=/projects/FlextradeCVS/Rel-11-1-0/
+export PROJECTS_HOME=/projects/FlextradeCVS/Rel-12-2-0/
+#export VERSION=Rel-11-1-0
+export VERSION=Rel-12-2-0
+export OPTIMIZE=NO
+export REPOSITORY=/mnt/build_share/repository
+export REPO_PATH=/projects:/mnt/build_share/repository
+export PROJECTS=/projects
+#export DEPTOOL=/mnt/build_share/repository/deptool
+export DEPTOOL=/projects/deptool/deptool
+export GLOG_v=3
+export FLEX_FXSTREET_TESTING=RBOS_ALL
